@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#080B10">
+<title>Quetta Sasta Rides</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;height:100%;background:#080B10;overflow:hidden;overscroll-behavior:none}
+.fswrap{position:fixed;inset:0;display:flex;flex-direction:column;background:#080B10;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#F2F6FB}
+#fapp{position:relative;flex:1;overflow:hidden}
+#ftab{flex:0 0 auto}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;animation:fp .24s ease both}
+@keyframes fp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.scr.mapscr{overflow:hidden}
+.scr.listscr{overflow-y:auto;overflow-x:hidden}
+.scr::-webkit-scrollbar{width:0}
+.scr>.pad{position:relative;z-index:1}
+#fmapwrap{position:absolute;inset:0;z-index:0}
+#fmap{width:100%;height:100%;background:#0B0E13}
+.leaflet-container{background:#0B0E13;font-family:inherit}
+.pin{width:24px;height:24px;border-radius:50%;border:3px solid #080B10;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#080B10}
+.pinme{width:16px;height:16px;border-radius:50%;background:#2E9BFF;border:3px solid #fff;box-shadow:0 0 0 6px rgba(46,155,255,.25)}
+.bikeic{width:32px;height:32px;border-radius:50%;background:#00D97E;border:2.5px solid #080B10;display:flex;align-items:center;justify-content:center;color:#04120A}
+.sheet{position:relative;z-index:10;margin-top:auto;background:#0F131A;border-radius:26px 26px 0 0;padding:8px 18px 18px;border-top:1px solid #1C232F;max-height:78%;overflow-y:auto}
+.sheet::-webkit-scrollbar{width:0}
+.grab{width:38px;height:4px;border-radius:4px;background:#2A3341;margin:0 auto 13px}
+.pad{padding:15px 18px}
+.grow{flex:1}.row{display:flex;align-items:center}.col{display:flex;flex-direction:column}
+.between{justify-content:space-between}.center{align-items:center;justify-content:center}.wrap{flex-wrap:wrap}
+.g5{gap:5px}.g6{gap:6px}.g7{gap:7px}.g8{gap:8px}.g10{gap:10px}.g11{gap:11px}.g12{gap:12px}
+.mut{color:#7C8A9C}.xs{font-size:11px}.sm{font-size:12.5px}.md{font-size:14px}
+.h1{font-size:26px;font-weight:800;letter-spacing:-.6px;color:#F2F6FB}
+.h2{font-size:18.5px;font-weight:700;color:#F2F6FB}.h3{font-size:15px;font-weight:700;color:#F2F6FB}
+.b6{font-weight:600}.b7{font-weight:700}.b8{font-weight:800}
+.fg{color:#F2F6FB}.acc{color:#00D97E}.amb{color:#FFB224}.mono{font-variant-numeric:tabular-nums}
+.btn{border:0;font:inherit;font-weight:700;border-radius:15px;padding:14px;cursor:pointer;width:100%;font-size:14px;display:flex;align-items:center;justify-content:center;gap:9px}
+.btn.pri{background:#00D97E;color:#04120A}.btn.gho{background:#171E29;color:#EAF0F7;border:1px solid #232C3A}
+.btn.red{background:#B91C1C;color:#fff}.btn.sm2{padding:10px;font-size:12.5px;border-radius:12px}
+.btn:disabled{opacity:.45}
+.field{background:#141A24;border:1px solid #232C3A;border-radius:15px;padding:12px 14px;display:flex;align-items:center;gap:9px}
+.field input{background:transparent;border:0;outline:0;color:#F2F6FB;font:inherit;font-size:14.5px;width:100%}
+.num{width:76px;text-align:right;font-weight:700}
+.sbar2{background:#141A24;border:1px solid #232C3A;border-radius:15px;padding:13px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;font:inherit;color:#7C8A9C;text-align:left;font-size:13.5px}
+.chip{background:#161D28;border:1px solid #232C3A;border-radius:12px;padding:8px 11px;font-size:12px;color:#DCE4EE;display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;white-space:nowrap}
+.chip.on{border-color:#00D97E;background:rgba(0,217,126,.09);color:#00D97E}
+.chiprow{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px}.chiprow::-webkit-scrollbar{height:0}
+.cat{background:#141A24;border:1px solid #212936;border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer}
+.cat .ic{width:34px;height:34px;border-radius:11px;background:rgba(0,217,126,.12);display:flex;align-items:center;justify-content:center;color:#00D97E}
+.card{background:#131922;border:1px solid #212936;border-radius:16px;padding:13px}
+.opt{display:flex;align-items:center;gap:11px;padding:11px;border-radius:15px;border:1.5px solid #1E2632;background:#111721;cursor:pointer}
+.opt.sel{border-color:#00D97E;background:rgba(0,217,126,.07)}
+.opt .ic{width:38px;height:38px;border-radius:12px;background:#1A2230;display:flex;align-items:center;justify-content:center;color:#8FA0B5;flex:0 0 38px}
+.opt.sel .ic{background:rgba(0,217,126,.16);color:#00D97E}
+.badge{font-size:10px;font-weight:800;padding:3px 7px;border-radius:7px;background:rgba(0,217,126,.16);color:#00D97E;display:inline-flex;align-items:center;gap:4px}
+.badge.amber{background:rgba(255,178,36,.16);color:#FFB224}.badge.grey{background:#1A2230;color:#8FA0B5}
+.dash{letter-spacing:2px;color:#4E5C70;font-weight:700}
+.payrow{display:flex;align-items:center;gap:11px;padding:11px;border-radius:14px;border:1.5px solid #1E2632;background:#111721;cursor:pointer}
+.payrow.sel{border-color:#00D97E;background:rgba(0,217,126,.07)}
+.paylogo{border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex:0 0 58px;width:58px;height:32px;font-size:9.5px}
+.route{padding-left:6px;position:relative}
+.rline{position:absolute;left:11px;top:16px;bottom:16px;width:2px;background:linear-gradient(#2E9BFF,#00D97E);opacity:.5}
+.rdot{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+.rrow{display:flex;align-items:center;gap:12px;padding:6px 0}
+.tabb{display:flex;background:#0C1119;border-top:1px solid #1A2130;padding:9px 6px calc(13px + env(safe-area-inset-bottom))}
+.tabi{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;color:#5D6A7C;cursor:pointer;font-size:10px;font-weight:600}
+.tabi.on{color:#00D97E}
+.listrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1A2130}
+.avatar{border-radius:50%;background:#1B2432;display:flex;align-items:center;justify-content:center;font-weight:800;color:#00D97E;border:1.5px solid #26313F;flex:0 0 44px;width:44px;height:44px;font-size:15px}
+.iconbtn{width:40px;height:40px;border-radius:13px;background:#141A24;border:1px solid #232C3A;display:flex;align-items:center;justify-content:center;color:#DCE4EE;cursor:pointer;flex:0 0 40px}
+.round{border-radius:50%;background:#141A24;border:1px solid #232C3A;display:flex;align-items:center;justify-content:center;color:#DCE4EE;cursor:pointer;flex:0 0 44px;width:44px;height:44px}
+.radar{position:relative;width:126px;height:126px;margin:0 auto}
+.radar span{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(0,217,126,.55);animation:frad 2.2s ease-out infinite}
+.radar span:nth-child(2){animation-delay:.7s}.radar span:nth-child(3){animation-delay:1.4s}
+@keyframes frad{0%{transform:scale(.35);opacity:.9}100%{transform:scale(1);opacity:0}}
+.radarc{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.radarc div{border-radius:50%;background:#00D97E;display:flex;align-items:center;justify-content:center;color:#04120A;width:52px;height:52px}
+.dots{display:flex;gap:5px}.dots i{width:7px;height:7px;border-radius:50%;background:#00D97E;animation:fbl 1.1s infinite}
+.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes fbl{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.prog{height:5px;border-radius:5px;background:#1E2632;overflow:hidden}
+.prog div{height:100%;background:#00D97E;border-radius:5px;transition:width .6s linear}
+.toggle{width:46px;height:26px;border-radius:20px;background:#232C3A;position:relative;cursor:pointer;flex:0 0 46px}
+.toggle.on{background:#00D97E}
+.toggle i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+.toggle.on i{left:23px}
+.suc{border-radius:50%;background:rgba(0,217,126,.14);display:flex;align-items:center;justify-content:center;color:#00D97E;width:74px;height:74px}
+.logo{width:64px;height:64px;border-radius:20px;background:#00D97E;display:flex;align-items:center;justify-content:center;color:#04120A}
+.brandline{font-size:9.5px;letter-spacing:2.4px;font-weight:700;color:#00D97E}
+.ovl{position:absolute;inset:0;background:rgba(6,9,13,.74);z-index:40;display:flex;align-items:flex-end}
+.modal{background:#0F131A;border-radius:26px 26px 0 0;width:100%;padding:10px 18px calc(20px + env(safe-area-inset-bottom));border-top:1px solid #1C232F;max-height:90%;overflow-y:auto}
+.ovl.mid{align-items:center;padding:18px}
+.ovl.mid .modal{border-radius:22px;border:1px solid #1C232F;max-width:320px}
+.topb{position:relative;z-index:10;display:flex;align-items:center;gap:9px;padding:calc(11px + env(safe-area-inset-top)) 15px 11px}
+.glass{background:rgba(12,17,25,.92);border:1px solid #1E2632;border-radius:15px}
+.merchant{background:#0E2A1E;border:1px dashed #2A6B4A;border-radius:14px;padding:11px 13px;display:flex;align-items:center;gap:10px;cursor:pointer}
+.petro{background:#1A1408;border:1px solid #4A3A12;border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:9px;cursor:pointer}
+.hmsg{max-width:80%}.amt{font-size:19px;font-weight:800}
+</style>
+</head>
+<body>
+<div class="fswrap"><div id="fapp"></div><div id="ftab"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+"use strict";
+var MERCHANT='03252596969', MFMT='0325-2596969';
+var PLACES=[
+ {n:'Jinnah Road',a:'City Centre, Quetta',lat:30.1975,lng:66.9930},{n:'Quetta Railway Station',a:'Jinnah Road, Quetta',lat:30.1940,lng:66.9960},
+ {n:'Liaquat Bazaar',a:'Old City, Quetta',lat:30.1985,lng:66.9980},{n:'Prince Road',a:'City Centre, Quetta',lat:30.1965,lng:66.9950},
+ {n:'Circular Road',a:'Quetta',lat:30.1930,lng:66.9960},{n:'Mission Road',a:'Quetta',lat:30.1955,lng:66.9990},
+ {n:'Toghi Road',a:'Quetta',lat:30.1900,lng:66.9980},{n:'Patel Bagh',a:'Quetta',lat:30.1930,lng:66.9900},
+ {n:'Quetta International Airport',a:'Airport Road, Quetta',lat:30.2514,lng:66.9377},{n:'Hanna Lake',a:'Hanna Urak Road',lat:30.2547,lng:67.0872},
+ {n:'Urak Valley',a:'Urak, Quetta',lat:30.2670,lng:67.1560},{n:'Wali Tangi',a:'Wali Tangi Road',lat:30.3160,lng:66.8700},
+ {n:'Pir Ghaib',a:'Pir Ghaib, Quetta',lat:30.2400,lng:66.9200},{n:'Sariab Road',a:'Sariab, Quetta',lat:30.1697,lng:66.9877},
+ {n:'Hazara Town',a:'Brewery Road, Quetta',lat:30.1745,lng:66.9455},{n:'Satellite Town',a:'Satellite Town, Quetta',lat:30.1830,lng:66.9930},
+ {n:'Jinnah Town',a:'Jinnah Town, Quetta',lat:30.2180,lng:66.9870},{n:'Samungli Road',a:'Samungli, Quetta',lat:30.2300,lng:66.9300},
+ {n:'Zarghoon Road',a:'Zarghoon Road, Quetta',lat:30.2030,lng:66.9900},{n:'Brewery Road',a:'Brewery Road, Quetta',lat:30.1885,lng:66.9820},
+ {n:'Quetta Cantt',a:'Cantonment, Quetta',lat:30.2043,lng:66.9906},{n:'Kuchlak',a:'Kuchlak, Quetta',lat:30.3430,lng:66.7620},
+ {n:'Pashtunabad',a:'Pashtunabad, Quetta',lat:30.1690,lng:66.9600},{n:'Double Road',a:'Double Road, Quetta',lat:30.1880,lng:66.9930},
+ {n:'Shahbaz Town',a:'Shahbaz Town, Quetta',lat:30.2130,lng:66.9930},{n:'Sabzal Road',a:'Sabzal Road, Quetta',lat:30.1920,lng:66.9560},
+ {n:'Spiny Road',a:'Spiny Road, Quetta',lat:30.1880,lng:66.9820},{n:'Sibi Road',a:'Sibi Road, Quetta',lat:30.1750,lng:66.9900},
+ {n:'Nawa Killi',a:'Nawa Killi, Quetta',lat:30.1620,lng:66.9860},{n:'Kharotabad',a:'Kharotabad, Quetta',lat:30.1900,lng:67.0150},
+ {n:'Arbab Karam Khan Road',a:'Quetta',lat:30.2020,lng:66.9860},{n:'Chaman Housing Scheme',a:'Chaman Housing, Quetta',lat:30.2210,lng:66.9600},
+ {n:'Model Town',a:'Model Town, Quetta',lat:30.2100,lng:66.9850},{n:'Killi Ismail',a:'Killi Ismail, Quetta',lat:30.1760,lng:66.9720},
+ {n:'Bolan Medical Complex',a:'BMC Hospital, Quetta',lat:30.1920,lng:66.9980},{n:'Sandeman Hospital',a:'Sandeman Road, Quetta',lat:30.2050,lng:66.9830},
+ {n:'Civil Hospital Quetta',a:'Quetta',lat:30.1990,lng:66.9900},{n:'BUITEMS',a:'Takatu Campus, Quetta',lat:30.2360,lng:66.9740},
+ {n:'University of Balochistan',a:'Sariab Road, Quetta',lat:30.1400,lng:66.9400},{n:'Ayub Stadium',a:'Quetta',lat:30.1900,lng:66.9880},
+ {n:'Quetta Club',a:'Quetta',lat:30.1970,lng:66.9880}];
+var TYPES=[
+ {id:'bike',n:'Bike',s:'1 seat · sabse sasta',ic:'bike',fuel:'Petrol',seats:1,eta:2},
+ {id:'ebike',n:'e-Bike',s:'1 seat · electric · eco',ic:'bolt',fuel:'Bijli',seats:1,eta:3},
+ {id:'auto',n:'Chingchi',s:'3 seats · savari',ic:'auto',fuel:'Petrol',seats:3,eta:4},
+ {id:'parcel',n:'Parcel',s:'chhota saman / delivery',ic:'box',fuel:'Petrol',seats:0,eta:3}];
+function defaultPrice(){return{petrol:272,elec:55,platform:15,night:1.2,avgSpeed:21,
+ base:{bike:25,ebike:20,auto:40,parcel:30},eff:{bike:45,ebike:110,auto:18,parcel:38},
+ margin:{bike:9,ebike:7,auto:14,parcel:5},perMin:{bike:1.5,ebike:1.2,auto:2.0,parcel:1.5}};}
+var PAYMENTS=[{id:'cash',n:'Cash',s:'Driver ko nakad dein',c:'#4B5A6E',tag:'NAKAD'},
+ {id:'easypaisa',n:'Easypaisa',s:'Telenor mobile wallet',c:'#00A651',tag:'EASYPAISA'},
+ {id:'jazzcash',n:'JazzCash',s:'Jazz mobile wallet',c:'#E4002B',tag:'JAZZCASH'},
+ {id:'wallet',n:'QSR Wallet',s:'App ka balance',c:'#00D97E',tag:'WALLET'}];
+var DRIVERS=[{n:'Asad Khan',r:4.9,v:'Honda CD 70',p:'QTA-4521',ph:'0301-2345671'},
+ {n:'Naveed Achakzai',r:4.8,v:'Honda CG 125',p:'QAB-7712',ph:'0302-3345672'},
+ {n:'Bilal Kakar',r:5.0,v:'Yamaha YBR 125',p:'QTA-2298',ph:'0303-4345673'},
+ {n:'Samiullah',r:4.7,v:'United 70',p:'QTC-1034',ph:'0304-5345674'},
+ {n:'Hamza Tareen',r:4.9,v:'Honda Pridor',p:'QAB-5560',ph:'0305-6345675'},
+ {n:'Zubair Mengal',r:4.8,v:'Road Prince 70',p:'QTA-8843',ph:'0306-7345676'}];
+var SAVED=[{k:'home',n:'Home',a:'Satellite Town, Quetta',lat:30.1830,lng:66.9930,ic:'home'},
+ {k:'work',n:'Work',a:'Jinnah Road, Quetta',lat:30.1975,lng:66.9930,ic:'work'},
+ {k:'air',n:'Airport',a:'Quetta Intl Airport',lat:30.2514,lng:66.9377,ic:'plane'}];
+var PROMOS=[{c:'QUETTA100',d:100,t:'Pehli ride par Rs 100 off',pct:0},{c:'SASTA20',d:0,t:'20% off (max Rs 120)',pct:20},{c:'STUDENT15',d:0,t:'Students ke liye 15% off',pct:15}];
+var HELP=[['wallet','Payment / wallet issue','Easypaisa, JazzCash, refunds'],['bike','Ride cancel / late driver','Cancel charges aur ETA'],
+ ['box','Saman bhool gaya','Lost item recovery'],['user','Driver ki shikayat','Rating aur complaint'],['tag','Fare ka aitraaz','Fare dispute'],['shield','Safety / accident','SOS aur insurance']];
+var NOTIF=[['bike','Aap ka driver 2 min door hai','Asad Khan · abhi'],['tag','QUETTA100 promo active hai','Aaj tak valid'],
+ ['wallet','Wallet top-up kaamyab','Rs 1,000 · kal'],['star','Aap ko 5 star mila','Bilal Kakar ne rate kiya']];
+var KEY='qsr_app_v1';
+var S,map,mapEl,mlayer,routeLine,bikeMarker,timers=[],animId=null;
+function defaults(){return{screen:'splash',user:null,balance:1850,pay:'cash',type:null,price:defaultPrice(),
+ pickup:{n:'Current location',a:'Jinnah Road, Quetta',lat:30.1965,lng:66.9940},drop:null,stop:null,note:'',sched:'Abhi',promo:null,
+ driver:null,driverPos:null,otp:'',q:'',stars:0,tip:0,tagPick:null,km:0,mins:0,surge:1,route:[],modal:null,step:'',
+ tmpPhone:'',payPhone:'',txn:'',notifRead:false,inv:null,
+ history:[{id:'QSR-90412',from:'Satellite Town',to:'Liaquat Bazaar',amt:130,pay:'Cash',d:'Kal, 6:12 PM',drv:'Asad Khan',km:3.4},
+  {id:'QSR-90388',from:'Jinnah Road',to:'Hazara Town',amt:190,pay:'Easypaisa',d:'Kal, 11:40 AM',drv:'Bilal Kakar',km:5.1},
+  {id:'QSR-90301',from:'Quetta Cantt',to:'Airport Road',amt:265,pay:'JazzCash',d:'2 din pehle',drv:'Hamza Tareen',km:7.8}]};}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({user:S.user,balance:S.balance,pay:S.pay,history:S.history,price:S.price}));}catch(e){}}
+function load(){try{var r=localStorage.getItem(KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+var IC={bike:'<path d="M5.5 18.5a3 3 0 100-6 3 3 0 000 6zm13 0a3 3 0 100-6 3 3 0 000 6zM9 15.5l2.5-7.5H15m-6 7.5h8M12 8h3l2 7.5"/>',
+ bolt:'<path d="M13 2L4.5 13H11l-1 9 8.5-11H12l1-9z"/>',
+ auto:'<path d="M3 16h18M5 16V9.5a2 2 0 012-2h6l4 4.5V16M7.5 19.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm9 0a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>',
+ box:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3zm0 0v18M4 7.5l8 4.5 8-4.5"/>',
+ search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',home:'<path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"/>',
+ work:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2"/>',
+ plane:'<path d="M10.5 20l1.5-5 8-2-8-2-1.5-5L9 11l-5 2 5 2 1.5 5z"/>',back:'<path d="M15 5l-7 7 7 7"/>',
+ star:'<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/>',
+ phone:'<path d="M4 5c0-1 1-2 2-2h2l2 5-2 1.5c1 2.5 3 4.5 5.5 5.5L15 13l5 2v2c0 1-1 2-2 2A14 14 0 014 5z"/>',
+ chat:'<path d="M21 12a8 8 0 01-11.5 7.2L4 21l1.8-5.5A8 8 0 1121 12z"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>',
+ clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>',check:'<path d="M4.5 12.5l5 5 10-11"/>',close:'<path d="M6 6l12 12M18 6L6 18"/>',
+ shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/>',
+ pin:'<path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',
+ share:'<path d="M12 3v12M8 7l4-4 4 4M5 14v5a1 1 0 001 1h12a1 1 0 001-1v-5"/>',
+ help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.8.7-1.5 1.2-1.5 2.3M12 17h.01"/>',
+ out:'<path d="M15 4h3a1 1 0 011 1v14a1 1 0 01-1 1h-3M10 8l-4 4 4 4M6 12h10"/>',
+ hist:'<path d="M3.5 12a8.5 8.5 0 108.5-8.5A8.5 8.5 0 005 6.5M3.5 3v4h4"/><path d="M12 8v4.5l3 1.8"/>',
+ gift:'<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M5 12v8h14v-8M12 8v12M12 8S10.5 3 8 3a2.5 2.5 0 000 5M12 8s1.5-5 4-5a2.5 2.5 0 010 5"/>',
+ nav:'<path d="M12 2l7 19-7-4-7 4 7-19z"/>',tag:'<path d="M3 12l9-9h8v8l-9 9-8-8z"/><circle cx="16" cy="8" r="1.4"/>',
+ wallet:'<rect x="2.5" y="6" width="19" height="13" rx="3"/><path d="M2.5 10h19"/><path d="M17 12.5h.01"/>',
+ sos:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5v5M12 16h.01"/>',
+ bell:'<path d="M6 9a6 6 0 1112 0c0 5 2 6 2 6H4s2-1 2-6zM10 19a2 2 0 004 0"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ fuel:'<path d="M3 21V6a2 2 0 012-2h6a2 2 0 012 2v15M3 12h10M13 9h4a2 2 0 012 2v6a1.5 1.5 0 003 0V9l-3-3M6 8h3"/>',
+ copy:'<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/>',
+ sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h10M18 18h2"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="16" cy="18" r="2"/>'};
+function ico(n,s,sw){s=s||18;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||1.7)+'" stroke-linecap="round" stroke-linejoin="round">'+(IC[n]||'')+'</svg>';}
+function rs(v){return 'Rs '+Math.round(v).toLocaleString('en-PK');}
+function esc(t){return String(t==null?'':t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function ini(n){return String(n||'?').split(' ').map(function(x){return x[0];}).join('').slice(0,2);}
+function hav(a,b){var R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180;
+ var x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+ return 2*R*Math.asin(Math.sqrt(x));}
+function roadKm(a,b){return Math.max(0.7,hav(a,b)*1.32);}
+function fuelCostPerKm(t){var p=S.price;return t.fuel==='Bijli'?(p.elec||55)/(p.eff[t.id]||110):(p.petrol||272)/(p.eff[t.id]||45);}
+function promoAmt(g){if(!S.promo)return 0;var p=PROMOS.filter(function(x){return x.c===S.promo;})[0];if(!p)return 0;
+ return p.d?Math.min(p.d,g):Math.min(120,Math.round(g*p.pct/100));}
+function quote(t,km){var p=S.price,mins=Math.max(4,Math.round(km/(p.avgSpeed||21)*60));
+ var fuel=Math.round(fuelCostPerKm(t)*km),margin=Math.round((p.margin[t.id]||8)*km),time=Math.round((p.perMin[t.id]||1.5)*mins),base=p.base[t.id]||25;
+ var gross=Math.round((base+fuel+margin+time)*(S.surge||1)),disc=promoAmt(gross);
+ return{km:km,mins:mins,gross:gross,disc:disc,fare:gross-disc,fuel:fuel,margin:margin,time:time,base:base,platform:Math.round(gross*(p.platform||15)/100)};}
+function qnow(){return quote(cur(),S.km||1);}
+function cur(){return TYPES.filter(function(t){return t.id===S.type;})[0]||TYPES[0];}
+function payName(){var p=PAYMENTS.filter(function(x){return x.id===S.pay;})[0];return p?p.n:'Cash';}
+function payObj(){return PAYMENTS.filter(function(x){return x.id===S.pay;})[0]||PAYMENTS[0];}
+function isDigital(){return S.pay==='easypaisa'||S.pay==='jazzcash'||S.pay==='wallet';}
+function clr(){timers.forEach(clearTimeout);timers=[];if(animId){clearInterval(animId);animId=null;}}
+function T(fn,ms){timers.push(setTimeout(fn,ms));}
+function go(s){S.screen=s;render();}
+function setModal(m,st){S.modal=m;S.mstep=st||'';render();}
+function searchList(){var q=(S.q||'').toLowerCase();return PLACES.filter(function(p){return !q||p.n.toLowerCase().indexOf(q)>=0||p.a.toLowerCase().indexOf(q)>=0;});}
+function ensureMap(){if(map)return;mapEl=document.createElement('div');mapEl.id='fmapwrap';mapEl.innerHTML='<div id="fmap"></div>';
+ map=L.map(mapEl.querySelector('#fmap'),{zoomControl:false,attributionControl:false,zoomSnap:0.5});
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=cb1_2nve_1_afe1da6ca18e958f7724fb54',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+ mlayer=L.layerGroup().addTo(map);map.setView([30.1965,66.9940],13);}
+function pinIcon(c){return L.divIcon({className:'',html:'<div class="pin" style="background:'+c+'"></div>',iconSize:[24,24],iconAnchor:[12,12]});}
+function meIcon(){return L.divIcon({className:'',html:'<div class="pinme"></div>',iconSize:[16,16],iconAnchor:[8,8]});}
+function bikeIcon(){return L.divIcon({className:'',html:'<div class="bikeic">'+ico('bike',17,2)+'</div>',iconSize:[32,32],iconAnchor:[16,16]});}
+function routePoints(a,b){var km=hav(a,b),n=Math.max(6,Math.min(26,Math.round(km*2.2))),dx=b.lng-a.lng,dy=b.lat-a.lat,p=[];
+ for(var i=0;i<=n;i++){var t=i/n,j=Math.sin(t*Math.PI)*0.0075*(i%2?1:-1);p.push([a.lat+dy*t-j*0.35,a.lng+dx*t+j]);}return p;}
+function clearMap(){if(mlayer)mlayer.clearLayers();}
+function syncMap(){if(!map||!mapEl)return;clearMap();bikeMarker=null;var sc=S.screen;
+ if(['home','search','booking','searching','driver','riding'].indexOf(sc)<0){setTimeout(function(){if(map)map.invalidateSize();},80);return;}
+ mlayer.addLayer(L.marker([S.pickup.lat,S.pickup.lng],{icon:meIcon()}));
+ if(sc==='home'||sc==='search'){map.setView([S.pickup.lat,S.pickup.lng],13.5,{animate:true});}
+ if((sc!=='home'&&sc!=='search')&&S.drop){
+  mlayer.addLayer(L.marker([S.drop.lat,S.drop.lng],{icon:pinIcon('#00D97E')}));
+  if(S.stop)mlayer.addLayer(L.marker([S.stop.lat,S.stop.lng],{icon:pinIcon('#FFB224')}));
+  var pts=(S.route&&S.route.length)?S.route:routePoints(S.pickup,S.drop);
+  routeLine=L.polyline(pts,{color:'#00D97E',weight:4,opacity:.9,lineJoin:'round'}).addTo(mlayer);
+  if(sc==='driver'||sc==='riding')bikeMarker=L.marker(S.driverPos||S.pickup,{icon:bikeIcon()}).addTo(mlayer);
+  map.fitBounds(routeLine.getBounds().pad(sc==='searching'?0.45:0.3),{animate:true});}
+ setTimeout(function(){if(map)map.invalidateSize();},80);}
+function tabs(){var on=S.screen;if(['home','history','wallet','profile'].indexOf(on)<0)return '';
+ var it=[['home','Home','nav'],['history','Rides','hist'],['wallet','Wallet','wallet'],['profile','Profile','user']];
+ return '<div class="tabb">'+it.map(function(i){return '<div class="tabi '+(on===i[0]?'on':'')+'" onclick="go(\''+i[0]+'\')">'+ico(i[2],20)+'<span>'+i[1]+'</span></div>';}).join('')+'</div>';}
+var V={};
+V.splash=function(){T(function(){go(S.user?'home':'login');},1200);
+ return '<div class="scr"><div class="pad grow col center g12"><div class="logo">'+ico('bike',32,2)+'</div>'
+ +'<div style="text-align:center;margin-top:4px"><div class="brandline">Quetta · Balochistan</div><div class="h1" style="margin-top:8px">Quetta Sasta<br>Rides</div></div>'
+ +'<div class="sm mut">Bike · Chingchi · Parcel — petrol ke hisab se sahi kiraya</div>'
+ +'<div class="dots" style="margin-top:10px"><i></i><i></i><i></i></div></div></div>';};
+V.login=function(){var otp=(S.step==='otp');
+ return '<div class="scr"><div class="pad grow col g12" style="justify-content:center"><div class="logo" style="width:52px;height:52px;border-radius:16px">'+ico('bike',25,2)+'</div>'
+ +'<div><div class="h2">'+(otp?'OTP code daalein':'Mobile number daalein')+'</div><div class="sm mut" style="margin-top:6px">'+(otp?('+92 '+esc(S.tmpPhone)+' par 4-digit code'):'Sirf ride book karne ke liye')+'</div></div>'
+ +(otp?'<div class="field"><input id="otpin" type="tel" maxlength="4" inputmode="numeric" placeholder="0000" style="letter-spacing:14px;font-size:22px;font-weight:700;text-align:center" oninput="OTPIN(this.value)"></div>'
+   +'<div class="xs mut" style="text-align:center">demo: koi bhi 4 digit — try 1234</div><button class="btn pri" onclick="VERIFY()">Verify aur aage barhein</button>'
+   :'<div class="field"><span class="md b6 fg">+92</span><input id="phin" type="tel" inputmode="numeric" maxlength="11" value="300 1234567"></div>'
+   +'<button class="btn pri" onclick="SENDOTP()">OTP bhejein</button>'
+   +'<div class="xs mut" style="text-align:center;line-height:1.7">Aage barhne se aap <span class="acc">Terms</span> aur <span class="acc">Privacy Policy</span> se ittefaq karte hain</div>')
+ +'</div></div>';};
+V.home=function(){var cats=[['bike','Bike'],['bolt','e-Bike'],['auto','Chingchi'],['box','Parcel']];
+ var unread=S.notifRead?'':'<span style="position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:#FF6B6B"></span>';
+ var recent=S.history.slice(0,3);
+ return '<div class="scr mapscr"><div class="topb">'
+ +'<div class="glass row g6" style="padding:8px 11px"><span class="acc">'+ico('fuel',14)+'</span><span class="xs b7 fg mono">Petrol '+rs(S.price.petrol)+'/L</span></div><div class="grow"></div>'
+ +'<div class="glass row center" style="padding:11px;width:40px;height:40px;position:relative" onclick="go(\'notif\')">'+ico('bell',15)+unread+'</div>'
+ +'<div class="glass row g6" style="padding:8px 11px" onclick="go(\'wallet\')"><span class="acc">'+ico('wallet',14)+'</span><span class="xs b7 fg">'+rs(S.balance)+'</span></div></div>'
+ +'<div class="sheet"><div class="grab"></div>'
+ +'<div class="row between" style="margin-bottom:13px"><div><div class="xs mut">Assalam-o-Alaikum</div><div class="h2" style="margin-top:2px">'+esc((S.user&&S.user.name)||'Rider')+'</div></div>'
+ +(S.promo?'<div class="badge">'+esc(S.promo)+' laga hua</div>':'<div class="badge amber">'+ico('tag',11)+'15% OFF</div>')+'</div>'
+ +'<button class="sbar2" onclick="go(\'search\')">'+ico('search',18)+'<span class="grow">Kahan jana hai?</span><span class="mut">'+ico('back',15)+'</span></button>'
+ +'<div class="chiprow" style="margin-top:11px">'+SAVED.map(function(s){return '<div class="chip" onclick="QUICK(\''+s.k+'\')">'+ico(s.ic,13)+s.n+'</div>';}).join('')
+ +'<div class="chip" onclick="setModal(\'sched\')">'+ico('cal',13)+'Schedule</div></div>'
+ +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px">'
+ +cats.map(function(c,i){return '<div class="cat" onclick="S.type=\''+TYPES[i].id+'\';go(\'search\')"><div class="ic">'+ico(c[0],18)+'</div><span class="xs b6 fg">'+c[1]+'</span></div>';}).join('')+'</div>'
+ +'<div class="petro" style="margin-top:13px" onclick="setModal(\'petrol\')"><span class="amb">'+ico('fuel',18)+'</span>'
+ +'<div class="grow"><div class="xs mut">Aaj ka petrol rate</div><div class="sm b7 fg">'+rs(S.price.petrol)+' / litre</div></div><span class="xs mut">'+ico('sliders',14)+'</span></div>'
+ +'<div class="card row g10" style="margin-top:10px;border-color:#1E3A2C;background:rgba(0,217,126,.06)" onclick="setModal(\'promo\')">'
+ +'<div class="acc">'+ico('gift',22)+'</div><div class="grow"><div class="sm b7 fg">'+(S.promo?esc(S.promo)+' apply hai':(PROMOS.length+' promo codes available'))+'</div>'
+ +'<div class="xs mut">'+(S.promo?'Tap karke badlein ya hatayein':'QUETTA100 se Rs 100 tak bachayein')+'</div></div><span class="mut">'+ico('back',14)+'</span></div>'
+ +'<div class="row between" style="margin-top:14px"><div class="sm b7 fg">Aap ke aas paas Quetta mein</div><div class="xs acc b6 row g6">'+ico('nav',12)+'live</div></div>'
+ +'<div class="row g8" style="margin-top:9px"><div class="card grow" style="padding:10px"><div class="h3">28</div><div class="xs mut">bike online</div></div>'
+ +'<div class="card grow" style="padding:10px"><div class="h3">3 min</div><div class="xs mut">avg pickup</div></div>'
+ +'<div class="card grow" style="padding:10px"><div class="h3">'+rs(fuelCostPerKm(TYPES[0]))+'</div><div class="xs mut">petrol / km</div></div></div>'
+ +(recent.length?'<div class="sm b7 fg" style="margin-top:14px">Phir se jayein</div><div class="chiprow" style="margin-top:8px">'
+   +recent.map(function(h){return '<div class="chip" onclick="REBOOK('+S.history.indexOf(h)+')">'+ico('hist',13)+esc(h.to)+'</div>';}).join('')+'</div>':'')
+ +'<div class="row g8" style="margin-top:12px"><div class="chip grow center" onclick="go(\'safety\')">'+ico('shield',13)+'Safety</div>'
+ +'<div class="chip grow center" onclick="go(\'help\')">'+ico('help',13)+'Madad</div>'
+ +'<div class="chip grow center" onclick="setModal(\'refer\')">'+ico('gift',13)+'Refer</div></div>'
+ +'</div></div>';};
+V.search=function(){var list=searchList();
+ return '<div class="scr mapscr"><div class="topb"><div class="iconbtn" onclick="go(\'home\')">'+ico('back')+'</div>'
+ +'<div class="glass field grow" style="padding:10px 12px"><span class="mut">'+ico('search',16)+'</span><input id="qin" placeholder="Manzil search karein..." value="'+esc(S.q)+'" oninput="S.q=this.value;render()"></div></div>'
+ +'<div class="sheet" style="max-height:80%"><div class="grab"></div>'
+ +'<div class="row between" style="margin-bottom:4px"><div class="xs mut b7" style="letter-spacing:1px">'+((S.q)?'NATAEEJ':'QUETTA KE MAQBOOL MAQAMAT')+'</div><div class="xs mut">'+list.length+' jaghein</div></div>'
+ +(list.length?list.map(function(p,i){return '<div class="listrow" onclick="PICK('+i+')">'
+  +'<div class="iconbtn" style="width:36px;height:36px;flex:0 0 36px;border-radius:11px">'+ico('pin',16)+'</div>'
+  +'<div class="grow"><div class="md b6 fg">'+esc(p.n)+'</div><div class="xs mut">'+esc(p.a)+'</div></div>'
+  +'<div class="xs mut b6 mono">'+roadKm(S.pickup,p).toFixed(1)+' km</div></div>';}).join(''):'<div class="pad center mut sm">Kuch nahi mila</div>')
+ +'</div></div>';};
+V.booking=function(){if(!S.drop)return V.search();var q=qnow();
+ return '<div class="scr mapscr"><div class="topb"><div class="iconbtn" onclick="go(\'home\')">'+ico('back')+'</div>'
+ +'<div class="glass grow" style="padding:10px 13px"><div class="sm b7 fg">'+esc(S.drop.n)+'</div><div class="xs mut">'+q.km.toFixed(1)+' km · ~'+q.mins+' min · '+esc(S.drop.a)+'</div></div></div>'
+ +'<div class="sheet"><div class="grab"></div>'
+ +'<div class="route" style="margin-bottom:11px"><div class="rline"></div>'
+ +'<div class="rrow"><div class="rdot" style="background:#2E9BFF"></div><div class="grow"><div class="xs mut">Pickup</div><div class="sm b6 fg">'+esc(S.pickup.n)+'</div></div></div>'
+ +(S.stop?'<div class="rrow"><div class="rdot" style="background:#FFB224"></div><div class="grow"><div class="xs mut">Stop</div><div class="sm b6 fg">'+esc(S.stop.n)+'</div></div><span class="xs mut" onclick="S.stop=null;prepBooking()">hata</span></div>':'')
+ +'<div class="rrow"><div class="rdot" style="background:#00D97E"></div><div class="grow"><div class="xs mut">Drop</div><div class="sm b6 fg">'+esc(S.drop.n)+'</div></div><span class="xs acc b6" onclick="go(\'search\')">badlein</span></div></div>'
+ +'<div class="chiprow" style="margin-bottom:11px"><div class="chip" onclick="setModal(\'addstop\')">'+ico('plus',13)+'Stop</div>'
+ +'<div class="chip" onclick="setModal(\'sched\')">'+ico('cal',13)+esc(S.sched)+'</div>'
+ +'<div class="chip" onclick="setModal(\'note\')">'+ico('chat',13)+(S.note?'Note laga':'Note')+'</div></div>'
+ +'<div class="petro" style="margin-bottom:12px" onclick="setModal(\'petrol\')"><span class="amb">'+ico('fuel',17)+'</span>'
+ +'<div class="grow"><div class="xs mut">Kiraya petrol rate se tay hota hai</div><div class="sm b7 fg">'+rs(S.price.petrol)+' / litre · '+q.km.toFixed(1)+' km</div></div><span class="mut">'+ico('sliders',14)+'</span></div>'
+ +'<div class="row between" style="margin-bottom:8px"><div class="sm b7 fg">Ride chunein</div>'+(S.surge>1?'<div class="badge amber">'+S.surge.toFixed(1)+'x peak</div>':'<div class="badge">sab se sasta</div>')+'</div>'
+ +'<div class="col g7">'+TYPES.map(function(x){var on=(x.id===S.type),qq=quote(x,S.km);
+  return '<div class="opt '+(on?'sel':'')+'" onclick="SELTYPE(\''+x.id+'\')"><div class="ic">'+ico(x.ic,20)+'</div>'
+  +'<div class="grow"><div class="row g6"><span class="md b7 fg">'+x.n+'</span>'+(x.id==='bike'?'<span class="badge">SASTA</span>':'')+(x.id==='ebike'?'<span class="badge amber">ECO</span>':'')+'</div>'
+  +'<div class="xs mut" style="margin-top:3px">'+x.s+'</div><div class="xs mut row g6" style="margin-top:3px">'+ico('clock',11)+x.eta+' min door · '+qq.mins+' min</div></div>'
+  +'<div style="text-align:right">'+(on?'<div class="amt acc mono">'+rs(qq.fare)+'</div><div class="xs acc b6">tay ho gaya</div>':'<div class="dash" style="font-size:17px">Rs —</div><div class="xs mut">tap karein</div>')+'</div></div>';}).join('')+'</div>'
+ +(S.type?'<div class="card col g5" style="margin-top:11px">'
+  +'<div class="row between"><span class="xs mut">Base fare</span><span class="sm fg">'+rs(qnow().base)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">'+esc(cur().fuel)+' ('+qnow().km.toFixed(1)+' km ÷ '+S.price.eff[S.type]+' × '+rs(cur().fuel==='Bijli'?S.price.elec:S.price.petrol)+')</span><span class="sm fg">'+rs(qnow().fuel)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Driver ka munafa</span><span class="sm fg">'+rs(qnow().margin)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Waqt '+qnow().mins+' min</span><span class="sm fg">'+rs(qnow().time)+'</span></div>'
+  +(S.surge>1?'<div class="row between"><span class="xs mut">Peak multiplier</span><span class="sm fg">'+S.surge.toFixed(1)+'x</span></div>':'')
+  +(S.promo?'<div class="row between"><span class="xs mut">Promo '+esc(S.promo)+'</span><span class="sm acc">- '+rs(qnow().disc)+'</span></div>':'')
+  +'<div style="height:1px;background:#212936"></div>'
+  +'<div class="row between"><span class="sm b7 fg">Total kiraya</span><span class="h3 acc">'+rs(qnow().fare)+'</span></div>'
+  +'<div class="xs mut">Ismein platform fee '+rs(qnow().platform)+' ('+S.price.platform+'%) shamil hai</div></div>'
+  :'<div class="card center col g5" style="margin-top:10px;border-style:dashed"><div class="sm b6 fg">Ride select karein</div>'
+   +'<div class="xs mut" style="text-align:center">Amount petrol rate, doori aur waqt dekh kar tay hoga</div></div>')
+ +'<div class="sm b7 fg" style="margin:14px 0 8px">Payment ka tareeqa</div>'
+ +'<div class="col g7">'+PAYMENTS.map(function(p){var on=(p.id===S.pay);
+   return '<div class="payrow '+(on?'sel':'')+'" onclick="S.pay=\''+p.id+'\';render()"><div class="paylogo" style="background:'+p.c+'">'+p.tag+'</div>'
+   +'<div class="grow"><div class="sm b7 fg">'+p.n+'</div><div class="xs mut">'+(p.id==='wallet'?rs(S.balance)+' available':p.s)+'</div></div>'
+   +(on?'<span class="acc">'+ico('check',18)+'</span>':'')+'</div>';}).join('')+'</div>'
+ +(isDigital()?'<div class="merchant" style="margin-top:10px" onclick="copyNum()"><span class="acc">'+ico('wallet',17)+'</span>'
+  +'<div class="grow"><div class="xs mut">Payment is number par receive hoga</div><div class="sm b7 fg mono">'+MFMT+'</div></div><span class="mut">'+ico('copy',15)+'</span></div>':'')
+ +'<button class="btn pri" style="margin-top:14px" '+(S.type?'':'disabled')+' onclick="BOOK()">'+ico('bike',17,2)+(S.type?'Ride book karein · '+rs(qnow().fare):'Pehle ride select karein')+'</button>'
+ +'</div></div>';};
+V.paying=function(){var p=payObj(),q=qnow();
+ if(S.step==='proc')return '<div class="scr"><div class="pad grow col center g12">'
+  +'<div class="paylogo" style="width:120px;height:52px;font-size:13px;border-radius:14px;background:'+p.c+'">'+p.tag+'</div>'
+  +'<div class="h2">'+p.n+' se payment</div><div class="h1 acc">'+rs(q.fare)+'</div><div class="dots"><i></i><i></i><i></i></div>'
+  +'<div class="merchant" style="width:100%"><span class="acc">'+ico('wallet',16)+'</span><div class="grow"><div class="xs mut">Receive hoga</div><div class="sm b7 fg mono">'+MFMT+'</div></div></div>'
+  +'<div class="xs mut" style="text-align:center;line-height:1.7">'+esc(S.payPhone)+' par request bheji gayi. Mobile par <b class="fg">Approve</b> dabayein.</div></div></div>';
+ if(S.step==='done')return '<div class="scr"><div class="pad grow col center g10"><div class="suc">'+ico('check',36,2.4)+'</div>'
+  +'<div class="h2">Payment kaamyab</div><div class="sm mut">'+rs(q.fare)+' '+p.n+' se ada ho gaya</div>'
+  +'<div class="merchant" style="width:100%"><span class="acc">'+ico('check',16)+'</span><div class="grow"><div class="xs mut">Receive hua</div><div class="sm b7 fg mono">'+MFMT+'</div></div></div>'
+  +'<div class="card col g5" style="width:100%"><div class="row between"><span class="xs mut">Txn ID</span><span class="sm b6 fg mono">'+esc(S.txn)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Method</span><span class="sm b6 fg">'+p.n+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Amount</span><span class="sm b7 acc">'+rs(q.fare)+'</span></div></div>'
+  +'<div class="xs mut">Driver assign kiya ja raha hai...</div></div></div>';
+ return '<div class="scr"><div class="pad grow col g10" style="overflow-y:auto">'
+  +'<div class="row g10"><div class="iconbtn" onclick="go(\'booking\')">'+ico('back')+'</div><div class="h3">Payment confirm karein</div></div>'
+  +'<div class="card row g10" style="border-color:'+p.c+'55;background:'+p.c+'14"><div class="paylogo" style="background:'+p.c+'">'+p.tag+'</div>'
+  +'<div class="grow"><div class="sm b7 fg">'+p.n+'</div><div class="xs mut">'+p.s+'</div></div><span class="badge">linked</span></div>'
+  +'<div class="merchant"><span class="acc">'+ico('wallet',16)+'</span><div class="grow"><div class="xs mut">Merchant number</div><div class="sm b7 fg mono">'+MFMT+'</div></div><span class="mut" onclick="copyNum()">'+ico('copy',15)+'</span></div>'
+  +'<div class="sm b7 fg">'+p.n+' mobile number</div>'
+  +'<div class="field"><span class="md b6 fg">+92</span><input id="paynum" type="tel" inputmode="numeric" maxlength="11" value="'+esc(S.payPhone||'300 1234567')+'"></div>'
+  +'<div class="sm b7 fg">'+p.n+' PIN</div>'
+  +'<div class="field"><span class="mut">'+ico('shield',16)+'</span><input id="paypin" type="tel" maxlength="4" inputmode="numeric" value="1234"></div>'
+  +'<div class="card col g5"><div class="row between"><span class="xs mut">Kiraya</span><span class="sm fg">'+rs(q.gross)+'</span></div>'
+  +(S.promo?'<div class="row between"><span class="xs mut">Promo '+esc(S.promo)+'</span><span class="sm acc">- '+rs(q.disc)+'</span></div>':'')
+  +'<div style="height:1px;background:#212936"></div><div class="row between"><span class="sm b7 fg">Ada karna hai</span><span class="h3 acc">'+rs(q.fare)+'</span></div></div>'
+  +'<div class="xs mut">'+ico('shield',11)+' 256-bit secure · '+p.n+' ke zariye</div>'
+  +'<button class="btn pri" onclick="DOPAY()">'+rs(q.fare)+' ab ada karein</button>'
+  +'<button class="btn gho sm2" onclick="go(\'booking\')">Payment tareeqa badlein</button></div></div>';};
+V.searching=function(){return '<div class="scr mapscr"><div class="topb"><div class="iconbtn" onclick="CANCEL()">'+ico('close')+'</div>'
+ +'<div class="glass grow" style="padding:10px 13px"><div class="sm b7 fg">Driver dhoond rahe hain...</div><div class="xs mut">'+esc(S.drop.n)+' · '+esc(cur().n)+' · '+rs(qnow().fare)+'</div></div></div>'
+ +'<div class="sheet" style="max-height:58%"><div class="grab"></div>'
+ +'<div class="radar" style="margin:4px auto 12px"><span></span><span></span><span></span><div class="radarc"><div>'+ico('bike',24,2)+'</div></div></div>'
+ +'<div style="text-align:center"><div class="h3">Qareeb ke drivers ko request gayi</div><div class="sm mut" style="margin-top:5px">Quetta mein '+(18+Math.floor(Math.random()*14))+' drivers online hain</div></div>'
+ +'<div class="col g7" style="margin-top:13px"><div class="card row g10"><span class="acc">'+ico('check',15)+'</span><div class="sm mut grow">Kiraya tay: '+rs(qnow().fare)+'</div><div class="xs acc">lock</div></div>'
+ +'<div class="card row g10"><span class="acc">'+ico('check',15)+'</span><div class="sm mut grow">Payment: '+payName()+'</div><div class="xs acc">ready</div></div>'
+ +'<div class="card row g10"><span class="acc">'+ico('check',15)+'</span><div class="sm mut grow">Pickup: '+esc(S.pickup.n)+'</div><div class="xs acc">set</div></div></div>'
+ +'<button class="btn gho sm2" style="margin-top:13px" onclick="CANCEL()">Cancel karein</button></div></div>';};
+V.driver=function(){var d=S.driver,q=qnow();
+ return '<div class="scr mapscr"><div class="topb"><div class="glass row g8 grow" style="padding:10px 13px">'+ico('clock',15)
+ +'<span class="sm b6 fg">'+(S.step==='arrived'?'Driver pohanch gaya':'Driver aa raha hai')+'</span><span class="grow"></span><span class="sm b7 acc">'+(S.step==='arrived'?'abhi':'~2 min')+'</span></div>'
+ +'<div class="glass row center" style="padding:11px;width:40px;height:40px" onclick="setModal(\'share\')">'+ico('share',15)+'</div></div>'
+ +'<div class="sheet"><div class="grab"></div>'
+ +'<div class="row between" style="margin-bottom:11px"><div><div class="xs mut">Aap ka driver</div><div class="sm b7 acc">'+(S.step==='arrived'?'Pohanch gaya — jaldi karein':'2 min mein pohanche ga')+'</div></div><div class="badge">'+esc(cur().n)+'</div></div>'
+ +'<div class="card row g11"><div class="avatar">'+ini(d.n)+'</div><div class="grow"><div class="md b7 fg">'+esc(d.n)+'</div>'
+ +'<div class="row g6 xs mut" style="margin-top:3px"><span class="acc">'+ico('star',11)+'</span>'+d.r.toFixed(1)+' · 1,240 rides</div>'
+ +'<div class="xs mut" style="margin-top:3px">'+esc(d.v)+' · <span class="fg b6">'+esc(d.p)+'</span></div></div>'
+ +'<div class="round" onclick="setModal(\'call\')">'+ico('phone',17)+'</div></div>'
+ +'<div class="card row between" style="margin-top:11px;border-color:#1E3A2C;background:rgba(0,217,126,.06)">'
+ +'<div><div class="xs mut">Ride shuru karne ka OTP</div><div class="xs mut" style="margin-top:2px">Ye code driver ko batayein</div></div>'
+ +'<div class="h2 acc mono" style="letter-spacing:5px">'+S.otp+'</div></div>'
+ +'<div class="row between" style="margin-top:12px"><div><div class="xs mut">Kiraya · '+payName()+'</div><div class="h3 acc">'+rs(q.fare)+'</div></div>'
+ +'<div class="chip" onclick="setModal(\'fare\')">'+ico('tag',13)+'fare details</div></div>'
+ +(isDigital()?'<div class="xs mut" style="margin-top:8px">'+ico('check',11)+' Payment '+MFMT+' par receive ho chuka</div>':'')
+ +'<button class="btn pri" style="margin-top:12px" onclick="START()">Ride shuru karein</button>'
+ +'<button class="btn gho sm2" style="margin-top:7px" onclick="CANCEL()">Ride cancel karein</button></div></div>';};
+V.riding=function(){var d=S.driver,q=qnow();
+ return '<div class="scr mapscr"><div class="topb"><div class="glass grow" style="padding:11px 13px">'
+ +'<div class="row between"><div class="xs mut">Manzil tak</div><div class="xs acc b7">live</div></div>'
+ +'<div class="row between" style="margin-top:3px"><div class="h3" id="remain">'+q.mins+' min</div><div class="sm mut mono" id="kmleft">'+q.km.toFixed(1)+' km</div></div>'
+ +'<div class="prog" style="margin-top:8px"><div id="prog" style="width:4%"></div></div></div>'
+ +'<div class="round" style="background:#B91C1C;border-color:#7F1D1D;color:#fff" onclick="setModal(\'sos\')">'+ico('sos',17)+'</div></div>'
+ +'<div class="sheet" style="max-height:52%"><div class="grab"></div>'
+ +'<div class="row g10"><div class="avatar">'+ini(d.n)+'</div><div class="grow"><div class="sm b7 fg">'+esc(d.n)+'</div><div class="xs mut">'+esc(d.v)+' · '+esc(d.p)+'</div></div>'
+ +'<div class="round" onclick="setModal(\'call\')">'+ico('phone',16)+'</div><div class="round" onclick="setModal(\'chat\')">'+ico('chat',16)+'</div></div>'
+ +'<div class="row between" style="margin-top:12px"><div class="xs mut">Ab ada karna hai ('+payName()+')</div><div class="h3 acc">'+rs(q.fare)+'</div></div>'
+ +'<div class="row g7" style="margin-top:11px"><div class="chip grow center" onclick="setModal(\'fare\')">'+ico('tag',13)+'fare</div>'
+ +'<div class="chip grow center" onclick="setModal(\'share\')">'+ico('share',13)+'share</div>'
+ +'<div class="chip grow center" onclick="setModal(\'chat\')">'+ico('chat',13)+'chat</div></div>'
+ +'<button class="btn gho sm2" style="margin-top:11px" onclick="FINISH()">Ride mukammal karein</button></div></div>';};
+V.rating=function(){var d=S.driver||DRIVERS[0];var tags=['Safi driving','Waqt ka paband','Achi baat-cheet','Saaf bike','Route janta tha'];
+ return '<div class="scr listscr"><div class="pad col g12" style="min-height:100%">'
+ +'<div style="text-align:center;margin-top:8px"><div class="suc" style="margin:0 auto">'+ico('check',32,2.4)+'</div>'
+ +'<div class="h2" style="margin-top:12px">Ride mukammal</div><div class="sm mut" style="margin-top:3px">'+esc(S.pickup.n)+' → '+esc(S.drop?S.drop.n:'')+'</div></div>'
+ +'<div class="card col center g7" style="padding:16px"><div class="avatar" style="width:54px;height:54px;flex:0 0 54px;font-size:18px">'+ini(d.n)+'</div>'
+ +'<div class="md b7 fg">'+esc(d.n)+'</div><div class="xs mut">'+esc(d.v)+' · '+esc(d.p)+'</div>'
+ +'<div class="row g7" style="margin-top:3px">'+[1,2,3,4,5].map(function(i){return '<span style="color:'+(i<=S.stars?'#FFB224':'#2A3341')+'" onclick="S.stars='+i+';render()">'+ico('star',29,1.4)+'</span>';}).join('')+'</div></div>'
+ +'<div class="row g7 wrap center">'+tags.map(function(t,i){return '<div class="chip '+(S.tagPick===i?'on':'')+'" onclick="S.tagPick='+i+';render()">'+esc(t)+'</div>';}).join('')+'</div>'
+ +'<div class="card"><div class="xs mut" style="margin-bottom:8px">Tip dein (optional)</div><div class="row g7">'
+ +[0,20,50,100].map(function(v){return '<div class="chip grow center '+(S.tip===v?'on':'')+'" onclick="S.tip='+v+';render()">'+(v?rs(v):'Nahi')+'</div>';}).join('')+'</div></div>'
+ +'<div class="grow"></div><button class="btn pri" onclick="go(\'home\')">Submit karein</button></div></div>';};
+V.history=function(){return '<div class="scr listscr"><div class="pad col g10"><div class="h2" style="margin-top:6px">Meri rides</div>'
+ +'<div class="row g7"><div class="card grow" style="padding:11px"><div class="h3">'+S.history.length+'</div><div class="xs mut">total rides</div></div>'
+ +'<div class="card grow" style="padding:11px"><div class="h3">'+rs(S.history.reduce(function(a,b){return a+b.amt;},0))+'</div><div class="xs mut">kul kharcha</div></div>'
+ +'<div class="card grow" style="padding:11px"><div class="h3 acc">Rs 340</div><div class="xs mut">bachat</div></div></div>'
+ +S.history.map(function(h){var i=S.history.indexOf(h);return '<div class="card col g7" onclick="OPENINV('+i+')"><div class="row between"><div class="xs mut">'+esc(h.d)+'</div><div class="badge grey">'+esc(h.id)+'</div></div>'
+ +'<div class="route"><div class="rline"></div><div class="rrow"><div class="rdot" style="background:#2E9BFF"></div><div class="sm fg b6">'+esc(h.from)+'</div></div>'
+ +'<div class="rrow"><div class="rdot" style="background:#00D97E"></div><div class="sm fg b6">'+esc(h.to)+'</div></div></div>'
+ +'<div class="row between"><div class="xs mut">'+esc(h.drv||'Driver')+' · '+esc(h.pay)+'</div><div class="md b8 fg">'+rs(h.amt)+'</div></div></div>';}).join('')
+ +'<div style="height:6px"></div></div></div>';};
+V.wallet=function(){var txs=[{n:'Ride — Liaquat Bazaar',a:-130,d:'Kal'},{n:'Top-up via JazzCash',a:1000,d:'2 din pehle'},{n:'Ride refund',a:60,d:'4 din pehle'}];
+ return '<div class="scr listscr"><div class="pad col g10"><div class="h2" style="margin-top:6px">Wallet</div>'
+ +'<div class="card col g7" style="background:#0E2A1E;border-color:#1E4A34;padding:17px"><div class="xs mut">QSR Wallet balance</div><div class="h1 acc">'+rs(S.balance)+'</div>'
+ +'<div class="row g7" style="margin-top:5px"><span class="badge">'+ico('shield',10)+'secure</span><span class="badge amber">5% cashback</span></div></div>'
+ +'<div class="merchant" onclick="copyNum()"><span class="acc">'+ico('wallet',16)+'</span><div class="grow"><div class="xs mut">Top-up is number par bhejein</div><div class="sm b7 fg mono">'+MFMT+'</div></div><span class="mut">'+ico('copy',15)+'</span></div>'
+ +'<div class="row g7"><div class="paylogo grow" style="height:46px;background:#00A651;font-size:12px;flex:1" onclick="setModal(\'topup\',\'easypaisa\')">EASYPAISA</div>'
+ +'<div class="paylogo grow" style="height:46px;background:#E4002B;font-size:12px;flex:1" onclick="setModal(\'topup\',\'jazzcash\')">JAZZCASH</div></div>'
+ +'<div class="row g7">'+[500,1000,2000].map(function(v){return '<button class="btn gho sm2 grow" onclick="TOPUP('+v+')">+ '+rs(v)+'</button>';}).join('')+'</div>'
+ +txs.map(function(t){return '<div class="listrow"><div class="iconbtn" style="width:34px;height:34px;flex:0 0 34px;border-radius:10px;color:'+(t.a>0?'#00D97E':'#8FA0B5')+'">'+ico(t.a>0?'plus':'bike',15)+'</div>'
+ +'<div class="grow"><div class="sm fg b6">'+esc(t.n)+'</div><div class="xs mut">'+esc(t.d)+'</div></div>'
+ +'<div class="sm b7 '+(t.a>0?'acc':'fg')+'">'+(t.a>0?'+':'-')+rs(Math.abs(t.a))+'</div></div>';}).join('')
+ +'<div style="height:6px"></div></div></div>';};
+V.profile=function(){return '<div class="scr listscr"><div class="pad col g10">'
+ +'<div class="card row g11" style="margin-top:6px;padding:15px"><div class="avatar" style="width:50px;height:50px;flex:0 0 50px;font-size:17px">RA</div>'
+ +'<div class="grow"><div class="md b7 fg">'+esc((S.user&&S.user.name)||'Rider Ahmed')+'</div><div class="xs mut">+92 '+(S.user&&S.user.phone?esc(S.user.phone):'300 1234567')+'</div>'
+ +'<div class="row g6" style="margin-top:5px"><span class="badge">'+ico('star',10)+'4.9 rider</span><span class="badge amber">Gold</span></div></div></div>'
+ +'<div class="card row g10" style="border-color:#3A2E10;background:rgba(255,178,36,.06)" onclick="go(\'pricing\')">'
+ +'<div class="amb">'+ico('sliders',20)+'</div><div class="grow"><div class="sm b7 fg">Kiraya aur petrol settings</div>'
+ +'<div class="xs mut">Petrol '+rs(S.price.petrol)+'/L · margin, base, fee — sab control</div></div><span class="mut">'+ico('back',14)+'</span></div>'
+ +[['user','Naam','Rider Ahmed'],['phone','Mobile','+92 300 1234567'],['pin','Saved jaghein','3 addresses'],
+  ['wallet','Payment methods','Easypaisa · JazzCash · Cash'],['gift','Promo codes',PROMOS.length+' available'],
+  ['shield','Safety center',''],['help','Madad / Support','']].map(function(r){
+  var fn=r[0]==='shield'?"go('safety')":(r[0]==='help'?"go('help')":(r[0]==='gift'?"setModal('promo')":"null"));
+  return '<div class="listrow" onclick="'+fn+'"><div class="iconbtn" style="width:36px;height:36px;flex:0 0 36px;border-radius:11px">'+ico(r[0],16)+'</div>'
+  +'<div class="grow"><div class="sm fg b6">'+r[1]+'</div>'+(r[2]?'<div class="xs mut">'+r[2]+'</div>':'')+'</div><span class="mut">'+ico('back',14)+'</span></div>';}).join('')
+ +'<button class="btn gho" onclick="LOGOUT()">'+ico('out',17)+'Log out</button>'
+ +'<div class="xs mut" style="text-align:center;margin-bottom:8px">Quetta Sasta Rides v1.0.0</div></div></div>';};
+V.pricing=function(){var p=S.price;
+ function row(id,label,unit,val,step){return '<div class="row between" style="padding:5px 0"><div class="grow"><div class="sm fg b6">'+label+'</div>'
+  +'<div class="xs mut">'+unit+'</div></div><input class="field num" style="padding:9px 11px" type="number" step="'+(step||1)+'" value="'+val+'" oninput="SETP(\''+id+'\',this.value)"></div>';}
+ function trow(t){return '<div class="card col g5" style="margin-top:9px"><div class="row g8"><span class="acc">'+ico(t.ic,16)+'</span><div class="sm b7 fg">'+t.n+'</div>'
+  +'<span class="grow"></span><span class="xs mut">'+(t.fuel==='Bijli'?'bijli':'petrol')+' '+rs(fuelCostPerKm(t))+'/km</span></div>'
+  +row('base_'+t.id,'Base fare','Rs',p.base[t.id])
+  +row('eff_'+t.id,(t.fuel==='Bijli'?'Bijli per unit (Rs)':'Petrol mileage (km per litre)'),t.fuel==='Bijli'?'Rs per unit':'km per litre',p.eff[t.id])
+  +row('margin_'+t.id,'Driver ka munafa','Rs per km',p.margin[t.id],0.5)
+  +row('perMin_'+t.id,'Intezar / waqt','Rs per minute',p.perMin[t.id],0.5)+'</div>';}
+ return '<div class="scr listscr"><div class="pad col g10">'
+ +'<div class="row g10" style="margin-top:6px"><div class="iconbtn" onclick="go(\'profile\')">'+ico('back')+'</div><div class="h2">Kiraya settings</div></div>'
+ +'<div class="card col g5" style="border-color:#3A2E10;background:rgba(255,178,36,.06)"><div class="row g8"><span class="amb">'+ico('fuel',18)+'</span>'
+ +'<div class="sm b7 fg">Aaj ka petrol rate</div></div><div class="xs mut">Rate badalne par har ride ka kiraya khud badal jayega. Roz update karein.</div></div>'
+ +row('petrol','Petrol rate','Rs per litre',p.petrol)
+ +row('elec','Bijli rate','Rs per unit',p.elec)
+ +row('platform','Platform fee','% of fare',p.platform)
+ +row('night','Raat ka multiplier','x (10pm - 6am)',p.night,0.1)
+ +row('avgSpeed','Average speed','km per hour',p.avgSpeed)
+ +'<div class="sm b7 fg" style="margin-top:6px">Har ride type ka hisaab</div>'+TYPES.map(trow).join('')
+ +'<div class="card col g5" style="margin-top:11px"><div class="sm b7 fg">Misaal: 5 km bike ride</div>'
+ +(function(){var q=quote(TYPES[0],5);return '<div class="row between"><span class="xs mut">Petrol (5 km ÷ '+p.eff.bike+' km/L × '+rs(p.petrol)+')</span><span class="sm fg">'+rs(q.fuel)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Driver munafa</span><span class="sm fg">'+rs(q.margin)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Waqt ('+q.mins+' min)</span><span class="sm fg">'+rs(q.time)+'</span></div>'
+  +'<div style="height:1px;background:#212936"></div>'
+  +'<div class="row between"><span class="sm b7 fg">Rider se lena hai</span><span class="h3 acc">'+rs(q.fare)+'</span></div>'
+  +'<div class="xs mut">Ismein se platform fee '+rs(q.platform)+' aap ka</div>';})()+'</div>'
+ +'<button class="btn pri" onclick="save();go(\'profile\')">'+ico('check',17,2.2)+'Save karein</button>'
+ +'<button class="btn gho sm2" onclick="S.price=defaultPrice();render()">Default par wapas</button>'
+ +'<div style="height:6px"></div></div></div>';};
+V.notif=function(){S.notifRead=true;return '<div class="scr listscr"><div class="pad col g10">'
+ +'<div class="row g10" style="margin-top:6px"><div class="iconbtn" onclick="go(\'home\')">'+ico('back')+'</div><div class="h2">Notifications</div></div>'
+ +NOTIF.map(function(n){return '<div class="card row g10"><div class="iconbtn" style="width:36px;height:36px;flex:0 0 36px;border-radius:11px;color:#00D97E">'+ico(n[0],16)+'</div>'
+ +'<div class="grow"><div class="sm fg b6">'+esc(n[1])+'</div><div class="xs mut">'+esc(n[2])+'</div></div></div>';}).join('')
+ +'<div style="height:6px"></div></div></div>';};
+V.safety=function(){return '<div class="scr listscr"><div class="pad col g10">'
+ +'<div class="row g10" style="margin-top:6px"><div class="iconbtn" onclick="go(\'home\')">'+ico('back')+'</div><div class="h2">Safety center</div></div>'
+ +'<div class="card col center g10" style="padding:18px;background:#2A1010;border-color:#4A1E1E"><div class="h1" style="color:#F87171">SOS</div>'
+ +'<div class="sm mut" style="text-align:center">Quetta Police (15), Rescue (1122) aur emergency contact ko alert jayega</div>'
+ +'<button class="btn red" onclick="setModal(\'sos\')">'+ico('sos',17)+'SOS bhejein</button></div>'
+ +[['share','Live ride sharing','Family ko live location bhejein'],['shield','Ride OTP verify','Har ride OTP se shuru hoti hai'],
+  ['user','Driver verification','CNIC + licence + police verification'],['help','Insurance cover','Har ride Rs 5 lakh tak covered']].map(function(r){
+  return '<div class="listrow"><div class="iconbtn" style="width:36px;height:36px;flex:0 0 36px;border-radius:11px;color:#00D97E">'+ico(r[0],16)+'</div>'
+  +'<div class="grow"><div class="sm fg b6">'+r[1]+'</div><div class="xs mut">'+r[2]+'</div></div></div>';}).join('')
+ +'<div style="height:6px"></div></div></div>';};
+V.help=function(){return '<div class="scr listscr"><div class="pad col g10">'
+ +'<div class="row g10" style="margin-top:6px"><div class="iconbtn" onclick="go(\'home\')">'+ico('back')+'</div><div class="h2">Madad / Support</div></div>'
+ +'<div class="card row g10"><div class="iconbtn" style="width:36px;height:36px;flex:0 0 36px;border-radius:11px;color:#00D97E">'+ico('phone',16)+'</div>'
+ +'<div class="grow"><div class="sm fg b6">24/7 helpline</div><div class="xs mut mono">'+MFMT+'</div></div></div>'
+ +HELP.map(function(h){return '<div class="listrow" onclick="setModal(\'ticket\')"><div class="iconbtn" style="width:36px;height:36px;flex:0 0 36px;border-radius:11px">'+ico(h[0],16)+'</div>'
+ +'<div class="grow"><div class="sm fg b6">'+esc(h[1])+'</div><div class="xs mut">'+esc(h[2])+'</div></div><span class="mut">'+ico('back',14)+'</span></div>';}).join('')
+ +'<div style="height:6px"></div></div></div>';};
+function modalHTML(){var m=S.modal;if(!m)return '';var body='',mid=false;
+ if(m==='petrol')body='<div class="h3">Aaj ka petrol rate</div><div class="sm mut" style="margin-top:5px">Rate badlein — poore app ka kiraya foran update ho jayega</div>'
+  +'<div class="field" style="margin-top:12px"><span class="amb">'+ico('fuel',17)+'</span><input id="petin" type="number" value="'+S.price.petrol+'" style="font-weight:700"><span class="sm mut">Rs/L</span></div>'
+  +'<div class="row g7" style="margin-top:9px">'+[255,265,272,280,290].map(function(v){return '<div class="chip grow center" onclick="document.getElementById(\'petin\').value='+v+'">Rs '+v+'</div>';}).join('')+'</div>'
+  +'<div class="card col g5" style="margin-top:11px"><div class="sm b7 fg">5 km bike ride par asar</div>'
+  +'<div class="row between"><span class="xs mut">Petrol cost</span><span class="sm fg">'+rs(quote(TYPES[0],5).fuel)+'</span></div>'
+  +'<div class="row between"><span class="sm b7 fg">Total kiraya</span><span class="h3 acc">'+rs(quote(TYPES[0],5).fare)+'</span></div></div>'
+  +'<div class="row g7" style="margin-top:11px"><button class="btn gho sm2" onclick="setModal(null)">Band</button>'
+  +'<button class="btn pri sm2" onclick="S.price.petrol=parseFloat(document.getElementById(\'petin\').value)||272;save();setModal(null)">Update karein</button></div>';
+ if(m==='call'){var d=S.driver||{n:'Asad Khan',ph:'0301-2345671'};
+  body='<div class="h3">'+esc(d.n)+'</div><div class="sm mut" style="margin-top:4px">Calling '+esc(d.ph||'0301-2345671')+'</div>'
+  +'<div class="row g8" style="margin-top:14px"><button class="btn gho sm2" onclick="setModal(null)">Band</button><button class="btn pri sm2" onclick="setModal(\'chat\')">Chat</button></div>';}
+ if(m==='chat')body='<div class="h3">Chat</div><div class="col g7" style="margin-top:12px">'
+  +'<div class="card hmsg"><div class="xs mut">Driver</div><div class="sm fg">Main Jinnah Road par hoon, 2 min</div></div>'
+  +'<div class="card hmsg" style="align-self:flex-end;background:rgba(0,217,126,.1);border-color:#1E4A34"><div class="xs mut">Aap</div><div class="sm fg">Theek hai, Prince Road ke corner par</div></div></div>'
+  +'<div class="field" style="margin-top:12px"><input placeholder="Message likhein..."><span class="acc">'+ico('nav',16)+'</span></div>'
+  +'<button class="btn gho sm2" style="margin-top:10px" onclick="setModal(null)">Band</button>';
+ if(m==='fare'){var q=qnow(),t=cur(),p=S.price;
+  body='<div class="h3">Kiraya ka poora hisaab</div><div class="card col g5" style="margin-top:12px">'
+  +'<div class="row between"><span class="xs mut">Base fare</span><span class="sm fg">'+rs(q.base)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">'+esc(t.fuel)+' · '+q.km.toFixed(1)+' km ÷ '+p.eff[t.id]+' × '+rs(t.fuel==='Bijli'?p.elec:p.petrol)+'</span><span class="sm fg">'+rs(q.fuel)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Driver ka munafa</span><span class="sm fg">'+rs(q.margin)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Waqt '+q.mins+' min</span><span class="sm fg">'+rs(q.time)+'</span></div>'
+  +(S.promo?'<div class="row between"><span class="xs mut">Promo '+esc(S.promo)+'</span><span class="sm acc">- '+rs(q.disc)+'</span></div>':'')
+  +'<div style="height:1px;background:#212936"></div><div class="row between"><span class="sm b7 fg">Kul</span><span class="h3 acc">'+rs(q.fare)+'</span></div>'
+  +'<div class="xs mut">Platform hissa: '+rs(q.platform)+'</div></div>'
+  +'<button class="btn gho sm2" style="margin-top:12px" onclick="setModal(null)">Samajh gaya</button>';}
+ if(m==='share')body='<div class="h3">Ride share karein</div><div class="sm mut" style="margin-top:5px">Live tracking link bhejein</div>'
+  +'<div class="row g7" style="margin-top:13px">'+['WhatsApp','SMS','Copy link'].map(function(x){return '<button class="btn gho sm2 grow">'+x+'</button>';}).join('')+'</div>'
+  +'<button class="btn gho sm2" style="margin-top:10px" onclick="setModal(null)">Band</button>';
+ if(m==='sos'){mid=true;body='<div class="h3" style="color:#F87171;text-align:center">Emergency SOS</div>'
+  +'<div class="sm mut" style="margin-top:6px;text-align:center">Quetta Police (15), Rescue (1122) aur emergency contact ko alert jayega</div>'
+  +'<div class="row g7" style="margin-top:14px"><button class="btn gho sm2" onclick="setModal(null)">Cancel</button><button class="btn red sm2" onclick="setModal(null)">SOS bhejein</button></div>';}
+ if(m==='promo')body='<div class="h3">Promo codes</div><div class="col g7" style="margin-top:12px">'
+  +PROMOS.map(function(p){var on=S.promo===p.c;return '<div class="card row g10" style="'+(on?'border-color:#00D97E;background:rgba(0,217,126,.07)':'')+'">'
+  +'<div class="acc">'+ico('tag',18)+'</div><div class="grow"><div class="sm b7 fg mono">'+p.c+'</div><div class="xs mut">'+esc(p.t)+'</div></div>'
+  +'<button class="btn '+(on?'gho':'pri')+' sm2" style="width:auto;padding:8px 12px" onclick="APPLYPROMO(\''+p.c+'\')">'+(on?'hatayein':'apply')+'</button></div>';}).join('')+'</div>'
+  +'<button class="btn gho sm2" style="margin-top:11px" onclick="setModal(null)">Band</button>';
+ if(m==='refer')body='<div class="h3">Refer &amp; earn</div><div class="sm mut" style="margin-top:5px">Dost ko invite karein, dono ko Rs 200 milega</div>'
+  +'<div class="card row between" style="margin-top:12px"><span class="sm b7 fg mono">QUETTA-RIDER-4U7</span><span class="mut">'+ico('copy',15)+'</span></div>'
+  +'<div class="row g7" style="margin-top:11px">'+['WhatsApp','SMS','Share'].map(function(x){return '<button class="btn gho sm2 grow">'+x+'</button>';}).join('')+'</div>'
+  +'<button class="btn gho sm2" style="margin-top:10px" onclick="setModal(null)">Band</button>';
+ if(m==='sched')body='<div class="h3">Ride schedule karein</div><div class="col g7" style="margin-top:12px">'
+  +['Abhi','30 min baad','1 ghante baad','Kal subah 8:00','Kal shaam 6:00'].map(function(t){
+   return '<div class="chip '+(S.sched===t?'on':'')+'" style="justify-content:flex-start" onclick="S.sched=\''+t+'\';setModal(null)">'+ico('cal',14)+esc(t)+'</div>';}).join('')+'</div>'
+  +'<button class="btn gho sm2" style="margin-top:11px" onclick="setModal(null)">Band</button>';
+ if(m==='note')body='<div class="h3">Driver ko note</div><div class="field" style="margin-top:12px"><input id="notein" placeholder="Misaal: gate par rukein" value="'+esc(S.note)+'"></div>'
+  +'<div class="row g7" style="margin-top:9px">'+['Gate par rukein','Saman hai','Jaldi karein'].map(function(t){return '<div class="chip" onclick="document.getElementById(\'notein\').value=\''+t+'\'">'+t+'</div>';}).join('')+'</div>'
+  +'<button class="btn pri sm2" style="margin-top:12px" onclick="S.note=(document.getElementById(\'notein\')||{}).value||\'\';setModal(null)">Save karein</button>';
+ if(m==='addstop')body='<div class="h3">Stop jodein</div><div class="col g7" style="margin-top:12px">'
+  +PLACES.slice(0,12).map(function(p){return '<div class="listrow" onclick="ADDSTOP(\''+esc(p.n)+'\')">'
+  +'<div class="iconbtn" style="width:34px;height:34px;flex:0 0 34px;border-radius:11px">'+ico('pin',15)+'</div>'
+  +'<div class="grow"><div class="sm fg b6">'+esc(p.n)+'</div><div class="xs mut">'+esc(p.a)+'</div></div></div>';}).join('')+'</div>'
+  +'<button class="btn gho sm2" style="margin-top:10px" onclick="setModal(null)">Band</button>';
+ if(m==='topup'){var p2=PAYMENTS.filter(function(x){return x.id===S.mstep;})[0]||PAYMENTS[1];
+  body='<div class="h3">Wallet top-up</div><div class="card row g10" style="margin-top:12px;border-color:'+p2.c+'55;background:'+p2.c+'14">'
+  +'<div class="paylogo" style="background:'+p2.c+'">'+p2.tag+'</div><div class="grow"><div class="sm b7 fg">'+p2.n+'</div><div class="xs mut">'+p2.s+'</div></div></div>'
+  +'<div class="merchant"><span class="acc">'+ico('wallet',16)+'</span><div class="grow"><div class="xs mut">Ye number par payment jayega</div><div class="sm b7 fg mono">'+MFMT+'</div></div><span class="mut" onclick="copyNum()">'+ico('copy',15)+'</span></div>'
+  +'<div class="field"><span class="md b6 fg">Rs</span><input id="topamt" type="tel" inputmode="numeric" value="1000"></div>'
+  +'<div class="row g7">'+[500,1000,2000,5000].map(function(v){return '<div class="chip grow center" onclick="document.getElementById(\'topamt\').value='+v+'">'+rs(v)+'</div>';}).join('')+'</div>'
+  +'<button class="btn pri" style="margin-top:12px" onclick="DOTOPUP()">Top-up karein</button>'
+  +'<button class="btn gho sm2" style="margin-top:7px" onclick="setModal(null)">Band</button>';}
+ if(m==='ticket'){mid=true;body='<div class="h3" style="text-align:center">Support ticket</div>'
+  +'<div class="sm mut" style="text-align:center;margin-top:5px">Ticket bhej di gayi hai. 24 ghante mein jawab milega.</div>'
+  +'<div class="card" style="margin-top:12px"><div class="xs mut">Ticket ID</div><div class="sm b7 fg mono">QSR-T'+Math.floor(10000+Math.random()*89999)+'</div></div>'
+  +'<button class="btn gho sm2" style="margin-top:11px" onclick="setModal(null)">Band</button>';}
+ if(m==='inv'){var inv=S.inv||S.history[0];if(inv){var km=inv.km||3;
+  body='<div class="h3">Ride receipt</div><div class="card col g5" style="margin-top:12px">'
+  +'<div class="row between"><span class="xs mut">Ride ID</span><span class="sm fg mono">'+esc(inv.id)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Tareekh</span><span class="sm fg">'+esc(inv.d)+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Driver</span><span class="sm fg">'+esc(inv.drv||'Driver')+'</span></div>'
+  +'<div class="row between"><span class="xs mut">Distance</span><span class="sm fg">'+km.toFixed(1)+' km</span></div>'
+  +'<div style="height:1px;background:#212936"></div><div class="row between"><span class="sm b7 fg">Ada hua</span><span class="h3 acc">'+rs(inv.amt)+'</span></div></div>'
+  +'<button class="btn gho sm2" style="margin-top:12px" onclick="setModal(null)">Band</button>';}}
+ return '<div class="ovl'+(mid?' mid':'')+'" onclick="if(event.target===this)setModal(null)"><div class="modal"><div class="grab"></div>'+body+'</div></div>';}
+window.SENDOTP=function(){S.tmpPhone=(document.getElementById('phin')||{}).value||'300 1234567';S.step='otp';render();};
+window.OTPIN=function(v){if(v.length===4)T(function(){window.VERIFY();},250);};
+window.VERIFY=function(){S.user={name:'Rider Ahmed',phone:S.tmpPhone||'300 1234567'};S.step='';save();go('home');};
+window.QUICK=function(k){var s=SAVED.filter(function(x){return x.k===k;})[0];if(!s)return;S.drop={n:s.n,a:s.a,lat:s.lat,lng:s.lng};S.stop=null;prepBooking();};
+window.PICK=function(i){var p=searchList()[i];if(!p)return;S.drop={n:p.n,a:p.a,lat:p.lat,lng:p.lng};S.stop=null;prepBooking();};
+window.prepBooking=function(){S.q='';S.type=null;S.km=roadKm(S.pickup,S.drop);S.surge=(Math.random()<0.35?1.3:1);S.route=routePoints(S.pickup,S.drop);go('booking');};
+window.SELTYPE=function(id){S.type=id;render();};
+window.SETP=function(k,v){S.price[k]=parseFloat(v)||0;save();};
+window.APPLYPROMO=function(c){S.promo=(S.promo===c)?null:c;setModal(null);};
+window.ADDSTOP=function(n){var p=PLACES.filter(function(x){return x.n===n;})[0];if(p)S.stop={n:p.n,a:p.a,lat:p.lat,lng:p.lng};
+ S.km=roadKm(S.pickup,S.drop)+(S.stop?roadKm(S.pickup,S.stop)*0.6:0);S.route=routePoints(S.pickup,S.drop);setModal(null);};
+window.copyNum=function(){try{if(navigator.clipboard)navigator.clipboard.writeText(MERCHANT);}catch(e){}};
+window.BOOK=function(){if(!S.type){S.type='bike';render();return;}
+ if(S.pay==='easypaisa'||S.pay==='jazzcash'){S.step='';go('paying');return;}
+ if(S.pay==='wallet'){S.balance-=qnow().fare;save();}findDriver();};
+window.DOPAY=function(){S.payPhone=(document.getElementById('paynum')||{}).value||'300 1234567';
+ S.txn=(S.pay==='easypaisa'?'EP':'JC')+Math.floor(100000+Math.random()*899999);S.step='proc';render();
+ T(function(){S.step='done';render();T(function(){S.step='';findDriver();},1700);},2100);};
+window.findDriver=function(){go('searching');T(function(){
+ S.driver=DRIVERS[Math.floor(Math.random()*DRIVERS.length)];S.otp=String(Math.floor(1000+Math.random()*8999));
+ S.step='';S.driverPos={lat:S.pickup.lat+0.008,lng:S.pickup.lng-0.010};go('driver');approach();},2600);};
+function approach(){var t=0,from={lat:S.driverPos.lat,lng:S.driverPos.lng};
+ animId=setInterval(function(){t+=0.12;
+  if(t>=1){clearInterval(animId);animId=null;S.step='arrived';render();return;}
+  S.driverPos={lat:from.lat+(S.pickup.lat-from.lat)*t,lng:from.lng+(S.pickup.lng-from.lng)*t};
+  if(bikeMarker)bikeMarker.setLatLng([S.driverPos.lat,S.driverPos.lng]);},420);}
+window.START=function(){go('riding');T(function(){rideAnim();},400);};
+function rideAnim(){var i=0,pts=(S.route&&S.route.length)?S.route:routePoints(S.pickup,S.drop),n=pts.length-1;
+ animId=setInterval(function(){i++;
+  if(i>n){clearInterval(animId);animId=null;T(function(){window.FINISH();},500);return;}
+  if(bikeMarker)bikeMarker.setLatLng(pts[i]);
+  var pct=Math.round(i/n*100),pr=document.getElementById('prog');if(pr)pr.style.width=Math.max(4,pct)+'%';
+  var rm=document.getElementById('remain');if(rm)rm.textContent=Math.max(1,Math.round(S.mins*(1-i/n)))+' min';
+  var kl=document.getElementById('kmleft');if(kl)kl.textContent=Math.max(0.1,S.km*(1-i/n)).toFixed(1)+' km';},620);}
+window.FINISH=function(){if(S.screen!=='rating'){var q=qnow();
+ S.history.unshift({id:'QSR-'+Math.floor(90000+Math.random()*9999),from:S.pickup.n,to:S.drop?S.drop.n:'',amt:q.fare,pay:payName(),
+  d:'Aaj, '+new Date().toLocaleTimeString('en-PK',{hour:'2-digit',minute:'2-digit'}),drv:S.driver?S.driver.n:'Driver',km:q.km});
+ if(S.tip)S.balance=Math.max(0,S.balance-S.tip);save();}
+ S.stars=0;S.tip=0;S.tagPick=null;S.stop=null;S.note='';S.sched='Abhi';S.type=null;go('rating');};
+window.CANCEL=function(){S.driver=null;S.driverPos=null;S.step='';go('booking');};
+window.TOPUP=function(v){S.balance+=v;save();render();};
+window.DOTOPUP=function(){var v=parseInt((document.getElementById('topamt')||{}).value||'1000',10);S.balance+=(isNaN(v)?0:v);save();setModal(null);};
+window.OPENINV=function(i){S.inv=S.history[i];setModal('inv');};
+window.REBOOK=function(i){var h=S.history[i];if(!h)return;
+ var pa=PLACES.filter(function(p){return p.n===h.from;})[0],pb=PLACES.filter(function(p){return p.n===h.to;})[0];
+ if(pa)S.pickup={n:pa.n,a:pa.a,lat:pa.lat,lng:pa.lng};if(pb)S.drop={n:pb.n,a:pb.a,lat:pb.lat,lng:pb.lng};
+ if(S.drop)prepBooking();else go('search');};
+window.LOGOUT=function(){S.user=null;S.step='';go('login');};
+window.setModal=setModal;window.go=go;
+function render(){clr();var app=document.getElementById('fapp');if(!app)return;
+ app.innerHTML=(V[S.screen]||V.home)();
+ var scr=app.querySelector('.scr');
+ if(['home','search','booking','searching','driver','riding'].indexOf(S.screen)>=0){ensureMap();if(scr)scr.prepend(mapEl);}
+ if(S.modal)app.insertAdjacentHTML('beforeend',modalHTML());
+ var tb=document.getElementById('ftab');if(tb)tb.innerHTML=tabs();
+ syncMap();}
+S=Object.assign(defaults(),load()||{});S.screen='splash';S.modal=null;S.step='';S.type=null;
+if(!S.price)S.price=defaultPrice();S.price=Object.assign(defaultPrice(),S.price);
+if(!S.history||!S.history.length)S.history=defaults().history;
+window.S=S;
+try{if(navigator.geolocation)navigator.geolocation.getCurrentPosition(function(p){S.gps={lat:p.coords.latitude,lng:p.coords.longitude};},function(){},{timeout:6000});}catch(e){}
+render();
+})();
+</script>
+</body>
+</html>
